@@ -1,0 +1,27 @@
+{
+  "name": "chronofork",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic event-sourced exchange with counterfactual replay, invariant verification and a hash-chained audit log.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "scripts": {
+    "dev": "node src/server/server.ts",
+    "start": "node src/server/server.ts",
+    "seed": "node src/cli.ts seed",
+    "verify": "node src/cli.ts verify",
+    "bench": "node src/cli.ts bench",
+    "replay": "node src/cli.ts replay",
+    "counterfactual": "node src/cli.ts counterfactual",
+    "test": "node --test \"test/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}

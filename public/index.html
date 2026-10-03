@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>chronofork — counterfactual market replay</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="mark">◆</span>
+        <div>
+          <h1>chronofork</h1>
+          <p class="tagline" id="session-tagline">deterministic exchange · counterfactual replay</p>
+        </div>
+      </div>
+      <div class="topbar-controls">
+        <label class="field">
+          <span>session</span>
+          <select id="session-picker"></select>
+        </label>
+        <button id="verify-button" class="button ghost" type="button">verify log</button>
+        <span id="verify-badge" class="badge muted">unverified</span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="column main">
+        <article class="card">
+          <header class="card-head">
+            <h2>Timeline</h2>
+            <div class="scrub-readout">
+              <output id="scrub-position">#0</output>
+              <span class="dim" id="scrub-clock">00:00:00.000</span>
+              <span class="dim" id="scrub-replay"></span>
+            </div>
+          </header>
+          <div class="scrub">
+            <input id="scrub" type="range" min="0" max="0" value="0" step="1" />
+            <div class="scrub-actions">
+              <button class="button ghost" data-step="-1" type="button">◀</button>
+              <button class="button ghost" data-step="1" type="button">▶</button>
+              <button class="button ghost" data-step="-10" type="button">−10</button>
+              <button class="button ghost" data-step="10" type="button">+10</button>
+              <button class="button ghost" data-jump="last" type="button">tip</button>
+              <button class="button" id="seek-edit" type="button">select this position</button>
+            </div>
+          </div>
+          <div id="chart" class="chart"></div>
+          <div class="scrub-foot">
+            <span class="dim" id="divergence-note">no alternative history loaded</span>
+            <span class="dim" id="timeline-note"></span>
+          </div>
+        </article>
+
+        <article class="card">
+          <header class="card-head">
+            <h2>Event tape</h2>
+            <span class="dim" id="tape-range"></span>
+          </header>
+          <div class="table-wrap">
+            <table class="tape">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>clock</th>
+                  <th>kind</th>
+                  <th>what happened</th>
+                  <th>from</th>
+                </tr>
+              </thead>
+              <tbody id="tape-body"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card" id="report-card" hidden>
+          <header class="card-head">
+            <h2>Counterfactual report</h2>
+            <span id="report-verdict" class="badge muted">—</span>
+          </header>
+          <p id="report-headline" class="headline"></p>
+          <div class="split">
+            <div>
+              <h3>What changed</h3>
+              <ul id="report-narration" class="narration"></ul>
+              <div id="report-deltas" class="deltas"></div>
+            </div>
+            <div>
+              <h3>Invariants</h3>
+              <div id="report-invariants" class="chips"></div>
+              <div id="report-meta" class="dim small"></div>
+            </div>
+          </div>
+          <div id="branch-form" hidden>
+            <h3>Drive this branch</h3>
+            <div class="inline-form">
+              <label class="field"><span>side</span>
+                <select id="branch-side"><option>BUY</option><option>SELL</option></select>
+              </label>
+              <label class="field"><span>price</span><input id="branch-price" type="number" step="1" /></label>
+              <label class="field"><span>qty</span><input id="branch-qty" type="number" step="10" value="100" /></label>
+              <label class="field"><span>tif</span>
+                <select id="branch-tif"><option>GTC</option><option>IOC</option><option>DAY</option></select>
+              </label>
+              <button class="button" id="branch-send" type="button">send order</button>
+            </div>
+            <p class="dim small" id="branch-note"></p>
+          </div>
+        </article>
+
+        <article class="card" id="tamper-card" hidden>
+          <header class="card-head">
+            <h2>Tamper test</h2>
+            <span class="dim" id="tamper-target"></span>
+          </header>
+          <p class="dim small">
+            A copy of the log is written to <code>data/tamper/</code> with one number changed. The real log is
+            never touched.
+          </p>
+          <div class="split three">
+            <div id="tamper-naive"></div>
+            <div id="tamper-forged"></div>
+            <div id="tamper-semantic"></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="column side">
+        <article class="card">
+          <header class="card-head">
+            <h2>Book</h2>
+            <span class="dim" id="book-meta"></span>
+          </header>
+          <div class="ladder" id="ladder"></div>
+          <div class="statline" id="market-stats"></div>
+        </article>
+
+        <article class="card">
+          <header class="card-head"><h2>Accounts</h2></header>
+          <div class="table-wrap">
+            <table class="accounts">
+              <thead>
+                <tr><th>owner</th><th>cash</th><th>reserved</th><th>pos</th></tr>
+              </thead>
+              <tbody id="accounts-body"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card">
+          <header class="card-head">
+            <h2>Experiment</h2>
+            <span class="dim" id="edit-target"></span>
+          </header>
+          <div class="inline-form">
+            <label class="field"><span>mode</span>
+              <select id="edit-mode">
+                <option value="counterfactual">keep the future</option>
+                <option value="branch">branch (unwritten)</option>
+              </select>
+            </label>
+            <label class="field checkbox">
+              <input id="edit-drop" type="checkbox" />
+              <span>this never happened</span>
+            </label>
+          </div>
+          <div id="edit-fields" class="inline-form"></div>
+          <div class="inline-form">
+            <label class="field grow"><span>label</span><input id="edit-label" type="text" placeholder="my experiment" /></label>
+            <button class="button" id="run-experiment" type="button">run counterfactual</button>
+          </div>
+          <p class="dim small" id="edit-hint"></p>
+        </article>
+
+        <article class="card">
+          <header class="card-head">
+            <h2>Prepared experiments</h2>
+            <span class="dim" id="prepared-count"></span>
+          </header>
+          <div id="prepared" class="prepared"></div>
+        </article>
+
+        <article class="card">
+          <header class="card-head"><h2>Branch tree</h2></header>
+          <div id="tree" class="tree"></div>
+        </article>
+      </section>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
